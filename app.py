@@ -1,8 +1,17 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify
-
 import json
+import os
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
+app.config['UPLOAD_FOLDER'] = 'uploads/'
+app.config['ALLOWED_EXTENSIONS'] = {'json'}
+
+# Ensure the upload folder exists
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
 @app.route('/')
 def index():
@@ -15,11 +24,15 @@ def upload_file():
     file = request.files['file']
     if file.filename == '':
         return redirect(url_for('index'))
-    if file:
-        data = json.load(file)
-        # process the data here
-        return jsonify(data)
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(filepath)
+        with open(filepath, 'r') as f:
+            data = json.load(f)
+            # Process the data here and store it for analytics
+            return jsonify(data)  # For now, just return the JSON data
+    return redirect(url_for('index'))
 
 if __name__ == '__main__':
     app.run(debug=True)
-

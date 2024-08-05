@@ -31,7 +31,11 @@ def upload_file():
         with open(filepath, 'r') as f:
             data = json.load(f)
             # Process the data here and store it for analytics
-            return jsonify(data)  # For now, just return the JSON data
+            analytics = {
+                    'total_videos': len(data),
+                    'most_recent_video': data[0] if data else None
+            }
+            return render_template('analytics.html', analytics=analytics)
     return redirect(url_for('index'))
 
 if __name__ == '__main__':
